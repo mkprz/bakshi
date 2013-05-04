@@ -1,0 +1,12 @@
+<h1>{{ prompt.text }}</h1>
+
+<form action="{% url 'erc_app:answer' interview.id %}" method="post">
+{% csrf_token %}
+{% for choice in prompt.choice_set.all %}
+	<input type="radio" name="choice" id="choice{{ forloop.counter }}" value="{{ choice.id }}"
+	<label for="choice{{ forloop.counter }}">{{ choice.text }}</label><br/>
+<% endfor %}
+	<input type="radio" id="choiceskip" name="choice" value="0"
+	<label for="choiceskip">Skip this question.</label><br/>
+<input type="submit" value="Answer"/>
+</form>
