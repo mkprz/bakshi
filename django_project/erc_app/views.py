@@ -9,10 +9,7 @@ prompt = None
 tmp_cmds = []
 cmds = []
 
-""" utility functions to be called from within CLIPS
-def addchoice(c):
-	choices.append(c)
-	return clips.String("ok")
+# utility functions to be called from within CLIPS
 def setprompt(n,q,c):
 	prompt_name = n
 	prompt = p
@@ -31,7 +28,6 @@ def index(request):
 
 def start_wizard(request):
 	env = InterviewStream.open()
-	env.RegisterPythonFunction(addchoice)
 	env.RegisterPythonFunction(setprompt)
 	env.RegisterPythonFunction(addcmd)
 	env.RegisterPythonFunction(setcmd)
@@ -67,7 +63,7 @@ def query(request):
 	for c in choices:
 		Choice.objects.create( userprompt=up, choice_text=c )
 
-	""" reset these variables
+	#reset these variables
 	prompt = None
 	choices = []
 
