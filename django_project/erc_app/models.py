@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import ModelForm
 import clips
 
 # Create your models here.
@@ -11,7 +12,7 @@ class ConfigFile:
 		filename = fn
 
 	@staticmethod
-	def write(string_list, myfilename=None)
+	def write(string_list, myfilename=None):
 		if( myfilename == None):
 			myfilename = filename
 		with open(myfilename, 'a') as myfile:
@@ -28,39 +29,38 @@ class InterviewStream:
 		env.Reset()
 		clips.DebugConfig.WatchAll()
 		clips.DebugConfig.DribbleOn("pyclips.log")
-		return env
+		return env, Interview.objects.create(created_at=DateTime.now)
 
 	@staticmethod
-	def next:
+	def next():
 		return env.Run(1)
 
 	@staticmethod
-	def close:
+	def close():
 		env.ClearPythonFunctions()
 		env.Clear()
 		env.Reset()
 
-	@staticmethod
-	def set_feedback(selected_choice):
-		fact_template = env.FindTemplate("response")
-		f = fact_template.BuildFact()
-		f.AssignSlotDefaults()
-		for k in selected_choice.keys():
-			f.Slots[k] = selected_choice[k]
-		f.Assert()
-
-class UserPrompt(models.Model):
-	interview = models.ForeignKey(Interview)
-	userprompt_text = models.CharField(max_length=1024)
-	response = models.OneToOneField(Choice)
+class Interview(models.Model):
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
 
 	def __unicode__(self):
-		return self.userprompt_text
+		return "Interview"
 
-class Choice(models.Model):
+class UserQuery(models.Model):
+	POSSIBLE_ANSWERS = (
+		("y", "YES"),
+		("n", "NO"),
+		("idk", "SKIP"))
 	interview = models.ForeignKey(Interview)
-	prompt = models.ForeignKey(Prompt)
-	choice_text = models.CharField(max_length=1024)
-	
+	query_name = models.CharField(max_length=1024, primary_key=True)
+	query_text = models.CharField(max_length=1024)
+	response = models.CharField(choices=POSSIBLE_ANSWERS)
+
 	def __unicode__(self):
-		return self.choice_text
+		return self.query_text
+
+class UserQueryForm(ModelForm):
+	class Meta:
+		model = UserQuery

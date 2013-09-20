@@ -1,112 +1,104 @@
-; based on design patterns from 
+; Expert-System Router Configuration (ERC) or Bakshi Router Configuration Wizard
+; mike perez: meekprize@gmail.com; kf5qvo@outlook.com
+; Feb - Oct, 2013
+
+; decision-tree-nodes strategy based on design patterns from 
 ; http://www.csie.ntu.edu.tw/~sylee/courses/clips/design.htm
 
-; node struct
+; function: setprompt
+; based on current-node, present user with a prompt
+; -- use within the CLIPS interactive shell
+; -- if using the web interface, use the same-named external python/django function
+(deffunction setprompt (?name ?question $?choices)
+	(assert (invalid-response))
+	(bind ?answer false)
+	(while invalid-response
+		(printout t ?name crlf ?question crlf $?choices)
+		(bind ?answer (read))
+		(assert (check-response ?choices ?answer)))
+	(return ?answer)
+)
+
+; rule: valid-response
+; check if user response is valid
+(defrule valid-response
+	(check-response ($? ?answer $?) ?answer)
+=>
+	(retract (invalid-response))
+)
+
+
+; fact template: node
+; use this data structure to develop your own decision-tree-nodes
+; multislots branch-nodes and script-cmds correspond to multislot possible-answers
 (deftemplate node
 	(slot name)
 	(slot type (default decision))
 	(slot question (type STRING))
-	(slot script-cmd (type STRING))
-	(slot selected-answer (default none))
 	(multislot possible-answers (default yes no))
-	(multislot branch-nodes))
-
-;init
-(defrule initialize
-	(not (node (name root)))
-=>
-	(assert (node (name root)
-			(question "Is this a household?")
-			(branch-nodes yes-household is-shared-printer)
-		)
-	)
-	(assert (current-node root))
+	(multislot script-cmds (default none))
+	(multislot branch-nodes (default none))
 )
 
-(defrule root-response
-	(current-node root)
-	?node <- (node (name root)
-			(branch-nodes ?yes-branch ?no-branch))
-	(not (node (name ?yes-branch)))
-	(not (node (name ?no-branch)))
-=>
-	(assert (node (name ?yes-branch)
-			(question "kids?")
-			(branch-nodes yes-kids is-cord-cutter)
-		)
-	)
-	(assert (node (name ?no-branch)
-			(question "Do you wish to share your printer over the network?")
-			(branch-nodes yes-printer-share end-thank-you)
-		)
-	)
-)
-
-(defrule yes-household-response
-	(current-node yes-household)
-	(not (node (name yes-kids)))
-	(not (node (name is-cord-cutter)))
-=>
-	(assert (node (name yes-kids)
-			(question "Do you want parental controls?")
-			(branch-nodes yes-parental-controls is-cord-cutter)
-		)
-	)
-	(assert (node (name is-cord-cutter)
-			(question "Have you canceled your cable provider in favor of a pure internet experience? Are you a cord-cutter?")
-			(branch-nodes yes-cord-cutter is-shared-printer)
-		)
-	)
-)
-
-(defrule is-cord-cutter-response
-	(current-node is-cord-cutter)
-	(not (node (name yes-cord-cutter)))
-	(not (node (name is-shared-printer)))
-=>
-	(assert (node (name yes-cord-cutter)
-			(selected-answer yes)
-			(branch-nodes end-thank-you)
-		)
-	)
-	(assert (node (name end-thank-you)
-			(type leaf)
-		)
-	)
-	
-)
-
-;ask away
-(deffunction setprompt (?name ?question $?choices)
-	(bind ?answer false)
-	(while (and (neq ?answer yes) (neq ?answer no))
-		(printout t ?name crlf ?question crlf $?choices)
-		(bind ?answer (read)))
-	(return ?answer)
-)
-
+; rule: ask-decision-node-question
+; using the current-node in the decision tree, trigger a user prompt
 (defrule ask-decision-node-question
+	(not (answer ?))
 	?node <- (current-node ?name)
 	(node (name ?name)
 		(type decision)
 		(question ?question)
 		(possible-answers $?choices))
-	(not (answer ?))
 =>
 	(assert (answer (setprompt ?name ?question $?choices)))
 )
 
-;response
+; rule: proceed-to-branch-node
+; the user response triggers a new current-node in the decision-tree
 (defrule proceed-to-branch-node
-	?answer_fact <- (answer ?choice)
-	?node_fact <- (current-node ?name)
+	(answer ?choice)
+	(current-node ?name)
 	(node (name ?name)
 		(type decision)
 		(possible-answers $?choices)
-		(branch-nodes $?branches))
+		(script-cmds $?cmds)
+		(branch-nodes $?branches)
+	)
 =>
-	(retract ?node_fact ?answer_fact)
-	(bind ?n (member$ ?choice $?choices))
-	(bind ?next (nth$ ?n $?branches))
-	(assert (current-node ?next))
+	(retract (answer ?choice))		; retract answer
+	(retract (current_node ?name)		; retract current-node
+	(bind ?n (member$ ?choice $?choices))	; find index of selected choice
+	(bind ?cmd (nth$ ?n $?cmds))		; find cmd for index
+	(bind ?next (nth$ ?n $?branches))	; find node for index
+	(assert (current-node ?next))		; assert new current-node
 )
+
+; initial fact list
+; add your decision nodes here
+(deffacts decision-tree
+	(current-node root)
+	(node (name root)
+		(question "Is this a household?")
+		(branch-nodes ask-parental-controls ask-shared-printer)
+	)
+	(node (name ask-parental-controls)
+		(question "Would you like parental controls?")
+		(branch-nodes need-parental-controls is-cord-cutter)
+	)
+	(node (name shared-printer)
+		(question "Share your printer over the network?")
+		(branch-nodes yes-printer-share end-thank-you)
+	)
+	(node (name is-cord-cutter)
+		(question "Canceled cable subscription?")
+		(branch-nodes yes-cord-cutter is-shared-printer)
+	)
+	(node (name yes-cord-cutter)
+		(selected-answer yes)
+		(branch-nodes end-thank-you)
+	)
+	(node (name end-thank-you)
+		(type leaf)
+	)	
+)
+

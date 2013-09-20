@@ -58,4 +58,12 @@ Refer to: http://pyclips.sourceforge.net/manual/pyclips-overview.html
 We use clips.run(1) to run the expert system until one(1) rule has been activated.
 We check our variables to see if a new message, new script command, or both need to be preocessed.
 
+++++++++++++++++++++++++++++++++++++++++++++++
+LICENSE
 
+This work is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by-nc-sa/3.0/ or send a letter to:
+
+Creative Commons, 444 Castro Street
+Suite 900
+Mountain View, California, 94041, USA.
+++++++++++++++++++++++++++++++++++++++++++++++
