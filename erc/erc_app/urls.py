@@ -1,7 +1,7 @@
 from django.conf.urls import patterns, url
-from erc_app import views
+from erc_app import views, forms
+from erc_app.views import BakshiWizard, FORMS
 
 urlpatterns = patterns('',
-	url(r'^$', views.index, name='index'),
-	url(r'^?P<interview_id>\d+)/query_response/$', views.query, name='query_response')
+	url(r'^next$', BakshiWizard.as_view(FORMS)),
 )

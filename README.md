@@ -4,19 +4,19 @@ A small-office/home-office router configuration wizard
 ## Dev Notes
 ### Windows Requirements
 1. Python2.6 32-bit (*not 64-bit*)
-2. PyClips for Python 2.6 **unofficial** from http://aosekai.net
-3. Django (tested with 1.6.6)
+2. PyClips **unofficial** for Python 2.6 from http://aosekai.net
+3. Django (1.6 installed via pip)
 
 ### Linux (Debian) Requirements
-1. Python2 (2.6 or 2.7?)
+1. Python 2 (2.6 or 2.7?)
 2. Install ```python-dev``` from debian repositories
 3. Use python to install pyclips
- - ```
+ ```
  tar xvzf pyclips.tar.gz
  cd pyclips
  python setup.py install
  ```
-4. Django (tested with 1.6.6)
+4. Django (1.6 installed via pip)
 
 ### verify devenv
 #### commandline

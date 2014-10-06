@@ -1,106 +1,99 @@
 from django.db import models
-from django.forms import ModelForm
 import clips
+from datetime import datetime
 
-# Create your models here.
+def startinterview():
+	i = Interview()
+	i.save()
+	return clips.Integer(i.id)
 
-class ConfigFile:
-	filename = "erc_config.sh"
+# utility function to be called from within CLIPS
+def setdecisionnode(interview_id, question, choices):
+	i = Interview.objects.get(interview_id)
+	i.set_next_node(question, choices)
+	i.save()
+	return clips.String("ok")
 
-	@staticmethod
-	def set_filename(fn):
-		filename = fn
+# utility function to be called from within CLIPS
+def netcfg(interview_id, cfg_name):
+	i = Interview.objects.get(interview_id)
+	# call function with name cfg_name from module erc_kb
+	i.add_cfg( getattr(erc_kb, cfg_name) )
+	i.save()
+	return clips.String("ok")
 
-	@staticmethod
-	def write(string_list, myfilename=None):
-		if( myfilename == None):
-			myfilename = filename
-		with open(myfilename, 'a') as myfile:
-			myfile.writelines(string_list)
+class Interview(models.Model):
+	default_filename = "erc_config.sh"
 
-class InterviewStream:
-	env = clips.Environment()
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+	config_text = models.TextField()
 
-	prompt = None
-	choices = []
-	cmds = []
+	def __unicode__(self):
+		ustr = u''
+		for decision in self.decision_set.all():
+			ustr += u'%s\n' % (decision.decision_text)
+		return ustr
 
-	# utility function to be called from within CLIPS
-	@staticmethod
-	def setprompt(n,p,c):
-		prompt = UserQueryForm(pk=n, query_text=p)
-		prompt_name = n
-		prompt = p
-		choices = c
-		return clips.String("ok")
+	def open(self, kbfile):
+		try:
+			clips.ClearPythonFunctions()
+			clips.RegisterPythonFunction(setprompt)
+			clips.RegisterPythonFunction(addcmd)
+			self.env = clips.Environment()
+			self.env.Clear()
+			self.env.Reset()
+			self.env.DebugConfig.WatchAll()
+			self.env.DebugConfig.DribbleOn("erc_app.pyclips.log")
+			self.env.Load(kbfile)
+			self.created_at = datetime.now()
+			self.save()
+		except clips.ClipsError:
+			print clips.ErrorStream.Read()
+		return self
 
-	# utility function to be called from within CLIPS
-	@staticmethod
-	def addcmd(cmd):
-		cmds.append(cmd)
-		return clips.String("ok")
+	def next(self):
+		try:
+			rules_left = self.env.Run(1)
+		except clips.ClipsError:
+				print clips.ErrorStream.Read()
 
-	@staticmethod
-	def open(kbfile):
-		env.ClearPythonFunctions()
-		env.Clear()
-		env.Load(kbfile)
-		env.Reset()
-		clips.DebugConfig.WatchAll()
-		clips.DebugConfig.DribbleOn("pyclips.log")
-
-		env.RegisterPythonFunction(setprompt)
-		env.RegisterPythonFunction(addcmd)
-		# env.RegisterPythonFunction(setcmd)
-
-		return env, Interview.objects.create(created_at=DateTime.now)
-
-	@staticmethod
-	def next():
-		rules_left = env.Run(1)
 		if( rules_left > 0 ):
-			if( choices.Count() > 0 ):
+			if( self.choices.Count() > 0 ):
 				# CLIPS has added some choices
-				while( prompt == None and r > 0 ):
-					rules_left = InterviewStream.next()
+				while( self.prompt == None and rules_left > 0 ):
+					rules_left = next()
 			elif( tmp_cmds.Count() > 0  ):
-				while( cmds.Count() == 0 and r > 0 ):
-					rules_left = InterviewStream.next()
+				while( self.cmds.Count() == 0 and rules_left > 0 ):
+					rules_left = next()
 		return rules_left
 
 
-	@staticmethod
-	def close():
-		env.ClearPythonFunctions()
-		env.Clear()
-		env.Reset()
+	def close(self):
+		try:
+			self.env.ClearPythonFunctions()
+			self.env.Clear()
+			self.env.Reset()
+		except clips.ClipsError:
+				print clips.ErrorStream.Read()
 
-	@staticmethod
-	def build_config(request):
-		ConfigFile.write( cmds )
+	def build_config(self, request):
+		with open(default_filename, 'a') as myfile:
+			myfile.writelines(config_text)
 
-class Interview(models.Model):
-	created_at = models.DateTimeField(auto_now_add=True)
-	updated_at = models.DateTimeField(auto_now=True)
+	def append_configuration(self, config_lines):
+		config_text += config_lines
 
-	def __unicode__(self):
-		return "Interview"
-
-class InterviewQuestion(models.Model):
+class Decision(models.Model):
+	CHOICES = (
+		("1", "A"),
+		("2", "B"),
+		("3", "Skip")
+	)
 	interview = models.ForeignKey(Interview)
-	query_text = models.CharField(max_length=255)
+	decision_text = models.CharField(max_length=255)
+	user_response = models.CharField(max_length=255, choices=CHOICES)
+	created_at = models.DateTimeField(auto_now_add=True)
 
 	def __unicode__(self):
-		return self.query_text
-
-class UserResponse(models.Model):
-	POSSIBLE_ANSWERS = (
-		("y", "YES"),
-		("n", "NO"),
-		("idk", "SKIP"))
-	question = models.ForeignKey(InterviewQuestion)
-	response = models.CharField(max_length=255, choices=POSSIBLE_ANSWERS)
-
-class UserQueryForm(ModelForm):
-	class Meta:
-		model = UserResponse
+		return u'%s:%s' % (self.query_text, self.response)

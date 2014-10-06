@@ -125,6 +125,8 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     'django.contrib.admindocs',
     'erc_app',
+    # https://docs.djangoproject.com/en/1.6/ref/contrib/formtools/form-wizard/
+    'django.contrib.formtools',
 )
 
 # A sample logging configuration. The only tangible logging

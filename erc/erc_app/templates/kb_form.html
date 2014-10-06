@@ -1,0 +1,6 @@
+<form action="{% url 'erc_app:next' interview.id %}" method="post">
+	{% csrf_token %}
+	{{form.as_p}}
+	<label>Run decision-nodes.clp</label><br/>
+	<input type="submit" value="Start"/>
+</form>

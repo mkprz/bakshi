@@ -1,4 +1,4 @@
-<form action="{% url 'erc_app:query' interview.id %}" method="post">
+<form action="{% url 'erc_app:decide' interview.id %}" method="post">
 	{% csrf_token %}
 	{{form.as_p}}
 	<input type="radio" id="choiceskip" name="choice" value="0"/>
