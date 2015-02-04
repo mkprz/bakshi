@@ -1,22 +1,18 @@
 # bakshi
 A small-office/home-office router configuration wizard
 
-## Dev Notes
-### Windows Requirements
-1. Python2.6 32-bit (*not 64-bit*)
-2. PyClips **unofficial** for Python 2.6 from http://aosekai.net
-3. Django (1.6 installed via pip)
+## Build Dev Environment
+Run erc/startenv.sh to build 32bit python2.6 and pyclips from source.
+The script will also create a virtualenv named "ev" and install the pyclips and django1.6 modules locally to the "ev" environment.
 
-### Linux (Debian) Requirements
-1. Python 2 (2.6 or 2.7?)
-2. Install ```python-dev``` from debian repositories
-3. Use python to install pyclips
- ```
- tar xvzf pyclips.tar.gz
- cd pyclips
- python setup.py install
- ```
-4. Django (1.6 installed via pip)
+```
+cd erc
+./startenv.sh
+```
+
+## Dev Notes
+I have not had luck using pyclips with 64bit python and many google searches will lead down the path to compiling pyclips with python2.7 but they often end-up buggy. Playing it safe here and sticking to 32bit python2.6. Using virtualenv to keep system default python in place and out of the way.
+
 
 ### verify devenv
 #### commandline
