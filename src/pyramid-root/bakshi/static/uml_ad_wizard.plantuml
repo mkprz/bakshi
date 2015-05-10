@@ -1,0 +1,40 @@
+@startuml
+
+title UC01 Run Wizard - Activity Diagram
+
+
+start
+
+:Load Modules on Stack;
+
+while(Modules on Stack?) is (Yes)
+	:Focus on next Module in Stack;
+	:Assert goal to find value for attr:module-attribute;
+	:Agenda List updated;
+
+	while(unresolved rules in Module) is (Yes)
+		if( goal matches consequent of an unresolved rule) then (Yes)
+			:Assert goal to find value for attr:rule-antecedent;
+		else (No)
+			:Prompt user for value of attribute;
+			:Assert attr:name value=user-response;
+		endif
+
+		if( attribute value is known ) then (Yes)
+			:Retract goal to find value for attribute;
+			if( attribute matches antecedent of unresolved rule ) then (Yes)
+				:Assert consequent of rule;
+				:Retract rule;
+			endif
+		endif
+	endwhile (No)
+
+
+	:determine configuration for module-attribute;
+	:add configuration to UCI script;
+endwhile (No)
+
+
+stop
+
+@enduml
