@@ -1,3 +1,6 @@
+#WARNING
+This readme is out of date. Django has been replaced with Pyramid. The Django source code has been preserved under src/django-root while the pyramid version lives next door at src/pyramid-root. The Pyramid version is a complete functioning version of this system while the Django version is not however, i have not yet tested building the dev-env (startenv.sh) and running the Pyramid application under this folder structure.
+
 # bakshi
 A small-office/home-office router configuration wizard
 
