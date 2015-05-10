@@ -121,14 +121,19 @@ fi
 #install mako templating engine
 $PYENVDIR/bin/pip install mako
 
-#install mako templating engine
+#install pyramid
 $PYENVDIR/bin/pip install pyramid
-
-#install mako templating engine
 $PYENVDIR/bin/pip install pyramid-log
 
-# create pyramid project using SQLAlchemy scaffold
-$PYENVDIR/bin/pcreate -s alchemy erc
-cd erc
-$PYENVDIR/bin/python setup.py develop
-$PYENVDIR/bin/pserve development.ini --reload
+# create or start pyramid project
+if [ ! -d erc ]; then
+  # if no source yet, setup sing SQLAlchemy scaffold
+  $PYENVDIR/bin/pcreate -s alchemy erc
+  cd erc
+  $PYENVDIR/bin/python setup.py develop
+else
+  # if source already exists then initialize database and start server
+  cd erc
+  initialize_bakshi development.ini
+  $PYENVDIR/bin/pserve development.ini --reload
+fi
